@@ -26,14 +26,20 @@ tryClearCheckerLog() {
   fi
 }
 
+SIDECAR_STARTED=0
+
 tryRestart() {
   TEST_PID=$(ps aux | grep -v "grep" | grep "org.codehaus.plexus.classworlds.launcher.Launcher" | grep "sidecar" | awk '{print $2}')
   date=`date +%Y-%m-%d@%H:%M:%S`
-  if [ "$TEST_PID" = "" ]; then
+  if [ "$TEST_PID" != "" ]; then
+    SIDECAR_STARTED=1
+    echo $date":Sidecar is running successfully, wait to next round check ..." >> $base/logs/checker.log
+  elif [ "$SIDECAR_STARTED" = "0" ]; then
+    # checker.sh is launched before the main app, restart here would start a second sidecar with the same WSN.
+    echo $date":Sidecar has not been started yet, wait to next round check ..." >> $base/logs/checker.log
+  else
     echo $date":Sidecar is not running,try restart sidecar at " $base/bin/startup.sh >> $base/logs/checker.log
     $base/bin/startup.sh
-  else
-    echo $date":Sidecar is running successfully, wait to next round check ..." >> $base/logs/checker.log
   fi
 }
 
